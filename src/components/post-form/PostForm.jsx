@@ -18,36 +18,95 @@ export default function PostForm({ post }) {
     const navigate = useNavigate();
     const userData = useSelector((state) => state.auth.userData);
 
+    // const submit = async (data) => {
+    //     if (post) {
+    //         const file = data.image[0] ? await appwriteService.uploadFile(data.image[0]) : null;
+
+    //         if (file) {
+    //             appwriteService.deleteFile(post.featuredImage);
+    //         }
+    //         console.log( "this is post "  , post)
+    //         const dbPost = await appwriteService.updatePost(post.$id, {
+    //             ...data,
+    //             featuredImage: file ? file.$id : undefined,
+    //         });
+
+    //         if (dbPost) {
+    //             navigate(`/post/${dbPost.$id}`);
+    //         }
+    //     } else {
+    //         const file = await appwriteService.uploadFile(data.image[0]);
+
+    //         if (file) {
+    //             const fileId = file.$id;
+    //             data.featuredImage = fileId;
+    //             console.log("this is user data " , userData)
+    //             const dbPost = await appwriteService.createPost({ ...data, userId: userData.$id });
+
+    //             if (dbPost) {
+    //                 navigate(`/post/${dbPost.$id}`);
+    //             }
+    //         }
+    //     }
+    // };
+
     const submit = async (data) => {
-        if (post) {
-            const file = data.image[0] ? await appwriteService.uploadFile(data.image[0]) : null;
 
-            if (file) {
-                appwriteService.deleteFile(post.featuredImage);
+        if (!userData?.$id) {
+                    console.error("User data is missing. Make sure the user is logged in.");
+                    return;
+                }
+
+        let fileId = null;
+    
+        if (data.image?.[0]) {
+            const file = await appwriteService.uploadFile(data.image[0]);
+    
+            if (!file) {
+                console.error("File upload failed");
+                return;
             }
+            fileId = file.$id;
+        }
+    
+        // Generate a valid slug
+        let slug = data.slug
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, "-") // Convert spaces to hyphens
+            .replace(/[^a-z0-9-_]/g, "") // Remove invalid characters
+            .slice(0, 30); // Keep slug length within a reasonable range
+    
+        // Ensure uniqueness by appending a short ID if needed
+        const uniqueId = nanoid(5); // Generates a 5-character unique ID
+        slug = `${slug}-${uniqueId}`.slice(0, 36); // Ensure it stays within 36 characters
 
+        console.log("generated slug : ",slug)
+        console.log("slug length : ", slug.length)
+    
+        if (post) {
             const dbPost = await appwriteService.updatePost(post.$id, {
                 ...data,
-                featuredImage: file ? file.$id : undefined,
+                featuredImage: fileId || post.featuredImage,
             });
-
+    
             if (dbPost) {
                 navigate(`/post/${dbPost.$id}`);
             }
         } else {
-            const file = await appwriteService.uploadFile(data.image[0]);
-
-            if (file) {
-                const fileId = file.$id;
-                data.featuredImage = fileId;
-                const dbPost = await appwriteService.createPost({ ...data, userId: userData.$id });
-
-                if (dbPost) {
-                    navigate(`/post/${dbPost.$id}`);
-                }
+            const dbPost = await appwriteService.createPost({
+                documentId: slug, // Use generated slug as document ID
+                ...data,
+                featuredImage: fileId,
+                userId: userData.$id,
+            });
+    
+            if (dbPost) {
+                navigate(`/post/${dbPost.$id}`);
             }
         }
     };
+
 
     const slugTransform = useCallback((value) => {
         if (value && typeof value === "string")
