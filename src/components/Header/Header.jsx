@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Container, Logo, LogoutBtn } from '../index';
 import { Link } from 'react-router-dom';
@@ -19,31 +20,36 @@ function Header() {
     return (
         <header className="bg-gray-800 py-4 shadow-md">
             <Container>
-                <nav className="flex justify-between items-center">
-                    <div className="flex items-center">
+                <nav className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    {/* Logo */}
+                    <div className="flex justify-center md:justify-start w-full md:w-auto">
                         <Link to="/">
                             <Logo width="70px" />
                         </Link>
                     </div>
-                    <ul className="flex space-x-6">
-                        {navItems.map((item) => (
+
+                    {/* Navigation Menu */}
+                    <ul className="flex flex-wrap justify-center md:justify-end gap-4 md:gap-6 w-full md:w-auto">
+                        {navItems.map((item) =>
                             item.active ? (
                                 <li key={item.name}>
                                     <button
                                         onClick={() => navigate(item.slug)}
-                                        className="text-gray-200 hover:bg-orange-500 transition duration-200 ease-in-out px-3 py-2 rounded-full focus:outline-none"
+                                        className="text-gray-200 hover:bg-orange-500 transition duration-200 ease-in-out px-4 py-2 rounded-full"
                                     >
                                         {item.name}
                                     </button>
                                 </li>
                             ) : null
-                        ))}
-                        {authStatus && (
-                            <li>
-                                <LogoutBtn />
-                            </li>
                         )}
                     </ul>
+
+                    {/* Logout Button (properly aligned on mobile) */}
+                    {authStatus && (
+                        <div className="flex justify-center md:justify-end w-full md:w-auto">
+                            <LogoutBtn />
+                        </div>
+                    )}
                 </nav>
             </Container>
         </header>
@@ -51,3 +57,4 @@ function Header() {
 }
 
 export default Header;
+
